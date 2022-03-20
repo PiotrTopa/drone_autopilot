@@ -1,0 +1,23 @@
+menu "Drone Inertial Navigation"
+
+    config X_GYRO_OFFSET
+        int
+        prompt "X Gyro offset"
+        default 0
+
+    config Y_GYRO_OFFSET
+        int
+        prompt "Y Gyro offset"
+        default 0
+
+    config Z_GYRO_OFFSET
+        int
+        prompt "Z Gyro offset"
+        default 0
+
+    config Z_ACCEL_OFFSET
+        int
+        prompt "Z Accelerator offset"
+        default 0
+
+endmenu
