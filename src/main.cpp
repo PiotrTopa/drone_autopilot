@@ -12,6 +12,7 @@
 #include "esp_spiffs.h"
 
 #include "inertialNavi.h"
+#include "BMP280.h"
 
 extern "C"
 {
@@ -34,6 +35,10 @@ extern "C"
 #define CONFIG_BL_GPIO 4
 
 InertialNavi inertialNavi = InertialNavi();
+BMP280 bmp = BMP280();
+int32_t pressure = 0;
+float altitude = 0.0;
+float temperature = 0.0;
 
 static const char *TAG = "ST7789";
 
@@ -52,23 +57,34 @@ void HorizontalTest(TFT_t *dev, FontxFile *fx, int width, int height)
 	lcdSetFontDirection(dev, 0);
 
 	color = WHITE;
-	sprintf((char *)ascii, "Acceleration / Rotation");
+	sprintf((char *)ascii, "Acc");
 	lcdDrawString(dev, fx, 0, fontHeight * 1 - 1, ascii, color);
-	sprintf((char *)ascii, "X: %3.2f Y: %3.2f", inertialNavi.ifrAcceleration.x, inertialNavi.rotation.yaw);
+	sprintf((char *)ascii, "X:%3.2f", inertialNavi.ifrAcceleration.x);
 	lcdDrawString(dev, fx, 0, fontHeight * 2 - 1, ascii, color);
-	sprintf((char *)ascii, "Y: %3.2f P: %3.2f", inertialNavi.ifrAcceleration.y, inertialNavi.rotation.pitch);
+	sprintf((char *)ascii, "Y:%3.2f", inertialNavi.ifrAcceleration.y);
 	lcdDrawString(dev, fx, 0, fontHeight * 3 - 1, ascii, color);
-	sprintf((char *)ascii, "Z: %3.2f R: %3.2f", inertialNavi.ifrAcceleration.z, inertialNavi.rotation.roll);
+	sprintf((char *)ascii, "Z:%3.2f", inertialNavi.ifrAcceleration.z);
 	lcdDrawString(dev, fx, 0, fontHeight * 4 - 1, ascii, color);
 
+	color = YELLOW;
+	sprintf((char *)ascii, "Rot");
+	lcdDrawString(dev, fx, 60, fontHeight * 1 - 1, ascii, color);
+	sprintf((char *)ascii, "Y:%3.2f", inertialNavi.rotation.yaw * 180/M_PI);
+	lcdDrawString(dev, fx, 60, fontHeight * 2 - 1, ascii, color);
+	sprintf((char *)ascii, "P:%3.2f", inertialNavi.rotation.pitch * 180/M_PI);
+	lcdDrawString(dev, fx, 60, fontHeight * 3 - 1, ascii, color);
+	sprintf((char *)ascii, "R:%3.2f", inertialNavi.rotation.roll * 180/M_PI);
+	lcdDrawString(dev, fx, 60, fontHeight * 4 - 1, ascii, color);
+
+/**
 	color = RED;
 	sprintf((char *)ascii, "Velocity");
 	lcdDrawString(dev, fx, 0, fontHeight * 6 - 1, ascii, color);
-	sprintf((char *)ascii, "X: %3.1f", inertialNavi.ifrVelocity.x);
+	sprintf((char *)ascii, "X: %3.2f", inertialNavi.ifrVelocity.x);
 	lcdDrawString(dev, fx, 0, fontHeight * 7 - 1, ascii, color);
-	sprintf((char *)ascii, "Y: %3.1f", inertialNavi.ifrVelocity.y);
+	sprintf((char *)ascii, "Y: %3.2f", inertialNavi.ifrVelocity.y);
 	lcdDrawString(dev, fx, 0, fontHeight * 8 - 1, ascii, color);
-	sprintf((char *)ascii, "Z: %3.1f", inertialNavi.ifrVelocity.z);
+	sprintf((char *)ascii, "Z: %3.2f", inertialNavi.ifrVelocity.z);
 	lcdDrawString(dev, fx, 0, fontHeight * 9 - 1, ascii, color);
 
 	color = GREEN;
@@ -79,6 +95,17 @@ void HorizontalTest(TFT_t *dev, FontxFile *fx, int width, int height)
 	sprintf((char *)ascii, "Y: %3.1f", inertialNavi.ifrPosition.y);
 	lcdDrawString(dev, fx, 0, fontHeight * 13 - 1, ascii, color);
 	sprintf((char *)ascii, "Z: %3.1f", inertialNavi.ifrPosition.z);
+	lcdDrawString(dev, fx, 0, fontHeight * 14 - 1, ascii, color);
+**/
+
+	color = GREEN;
+	sprintf((char *)ascii, "Aero");
+	lcdDrawString(dev, fx, 0, fontHeight * 11 - 1, ascii, color);
+	sprintf((char *)ascii, "Temp: %3.2f C", temperature);
+	lcdDrawString(dev, fx, 0, fontHeight * 12 - 1, ascii, color);
+	sprintf((char *)ascii, "Pres: %d", pressure);
+	lcdDrawString(dev, fx, 0, fontHeight * 13 - 1, ascii, color);
+	sprintf((char *)ascii, "Alti: %3.2f", altitude);
 	lcdDrawString(dev, fx, 0, fontHeight * 14 - 1, ascii, color);
 }
 
@@ -138,6 +165,18 @@ extern "C" void update_display(void *pvParameters)
 	}
 }
 
+extern "C" void update_bmp(void *pvParameters) {
+	while (true)
+	{
+		temperature = bmp.getTemperatureC();
+		pressure = bmp.getPressure();
+		//altitude = bmp.getAltitude(pressure, 1013);
+		vTaskDelay(100 / portTICK_PERIOD_MS);
+		ESP_LOGI("BMP", "Reding... t: %3.2f p: %d", temperature, pressure);
+	}
+}
+
+
 void init_i2c()
 {
 	i2c_config_t conf;
@@ -159,6 +198,17 @@ void start(void)
 	inertialNavi.initialize();
 
 	xTaskCreate(vTaskDroneInertialNavi, "InertialNavi", 2048, (void *) &inertialNavi, 2, NULL);
+
+	BMP280 bmp = BMP280();
+	if(bmp.testConnection()) {
+		ESP_LOGI("BMP", "BMP connection successful");
+	} else {
+		ESP_LOGI("BMP", "BMP cannot connect");
+	}
+	bmp.initialize();
+
+	xTaskCreate(update_bmp, "BMP", 2048, NULL, 2, NULL);
+
 }
 
 extern "C" void app_main(void)

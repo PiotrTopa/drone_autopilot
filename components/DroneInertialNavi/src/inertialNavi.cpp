@@ -24,12 +24,14 @@ void InertialNavi::initialize()
     uint8_t devId = mpu.getDeviceID();
     ESP_LOGI(TAG, "DevID: %x", devId);
     mpu.initialize();
+    mpu.CalibrateGyro();
+    mpu.CalibrateAccel();
     mpu.dmpInitialize();
 
-    mpu.setXGyroOffset(CONFIG_X_GYRO_OFFSET);
-    mpu.setYGyroOffset(CONFIG_Y_GYRO_OFFSET);
-    mpu.setZGyroOffset(CONFIG_Z_GYRO_OFFSET);
-    mpu.setZAccelOffset(CONFIG_Z_ACCEL_OFFSET);
+    //mpu.setXGyroOffset(CONFIG_X_GYRO_OFFSET);
+    //mpu.setYGyroOffset(CONFIG_Y_GYRO_OFFSET);
+    //mpu.setZGyroOffset(CONFIG_Z_GYRO_OFFSET);
+    //mpu.setZAccelOffset(CONFIG_Z_ACCEL_OFFSET);
     mpu.setDMPEnabled(true);
     ESP_LOGI(TAG, "Initialization completed");
 }
@@ -53,16 +55,14 @@ void InertialNavi::updateIfrVelocityPosition()
         ifrPosition = VectorFloat();
     }
 
-    float delta = DMP_REFRESH_PERIOD_MS / 1000;
+    float delta = (float) DMP_REFRESH_PERIOD_MS / 1000.;
     ifrVelocity.x += delta * (float)ifrAcceleration.x;
     ifrVelocity.y += delta * (float)ifrAcceleration.y;
     ifrVelocity.z += delta * (float)ifrAcceleration.z;
-    ESP_LOGI("MPUQ", "V: %3.1f %3.1f %3.1f", ifrVelocity.x, ifrVelocity.y, ifrVelocity.z);
 
     ifrPosition.x += delta * (float)ifrVelocity.x;
     ifrPosition.y += delta * (float)ifrVelocity.y;
     ifrPosition.z += delta * (float)ifrVelocity.z;
-    ESP_LOGI("MPUQ", "POS: %3.1f %3.1f %3.1f", ifrPosition.x, ifrPosition.y, ifrPosition.z);
 }
 
 /**
