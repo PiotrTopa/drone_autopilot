@@ -13,6 +13,7 @@
 
 #include "inertialNavi.h"
 #include "BMP280.h"
+#include "I2Cdev.h"
 
 extern "C"
 {
@@ -20,8 +21,8 @@ extern "C"
 #include "fontx.h"
 }
 
-#define PIN_SDA 32
-#define PIN_CLK 33
+#define PIN_I2C_SDA GPIO_NUM_32
+#define PIN_I2C_SCL GPIO_NUM_33
 
 #define CONFIG_WIDTH 135
 #define CONFIG_HEIGHT 240
@@ -34,11 +35,11 @@ extern "C"
 #define CONFIG_RESET_GPIO 23
 #define CONFIG_BL_GPIO 4
 
+I2Cdev i2c = I2Cdev(I2C_NUM_0);
+BMP280 bmp;
 InertialNavi inertialNavi = InertialNavi();
-BMP280 bmp = BMP280();
-int32_t pressure = 0;
-float altitude = 0.0;
-float temperature = 0.0;
+double pressure, altitude, temperature;
+double seaLevelPressure = 103400.0;
 
 static const char *TAG = "ST7789";
 
@@ -103,9 +104,9 @@ void HorizontalTest(TFT_t *dev, FontxFile *fx, int width, int height)
 	lcdDrawString(dev, fx, 0, fontHeight * 11 - 1, ascii, color);
 	sprintf((char *)ascii, "Temp: %3.2f C", temperature);
 	lcdDrawString(dev, fx, 0, fontHeight * 12 - 1, ascii, color);
-	sprintf((char *)ascii, "Pres: %d", pressure);
+	sprintf((char *)ascii, "Pres: %3.2f Pa", pressure);
 	lcdDrawString(dev, fx, 0, fontHeight * 13 - 1, ascii, color);
-	sprintf((char *)ascii, "Alti: %3.2f", altitude);
+	sprintf((char *)ascii, "Alti: %3.2f m", altitude);
 	lcdDrawString(dev, fx, 0, fontHeight * 14 - 1, ascii, color);
 }
 
@@ -168,47 +169,35 @@ extern "C" void update_display(void *pvParameters)
 extern "C" void update_bmp(void *pvParameters) {
 	while (true)
 	{
-		temperature = bmp.getTemperatureC();
-		pressure = bmp.getPressure();
-		//altitude = bmp.getAltitude(pressure, 1013);
-		vTaskDelay(100 / portTICK_PERIOD_MS);
-		ESP_LOGI("BMP", "Reding... t: %3.2f p: %d", temperature, pressure);
+		bmp.readRawData();
+		temperature = bmp.getTemperatureDouble();
+		pressure = bmp.getPressureDouble();
+		altitude = 44330 * (1.0 - pow(pressure / seaLevelPressure, 0.1903));
+		printf("READING %3.2f %3.2f %3.2f\n", temperature, pressure, altitude);
+		vTaskDelay(250/ portTICK_PERIOD_MS);
 	}
 }
 
-
-void init_i2c()
-{
-	i2c_config_t conf;
-	conf.mode = I2C_MODE_MASTER;
-	conf.sda_io_num = (gpio_num_t)PIN_SDA;
-	conf.scl_io_num = (gpio_num_t)PIN_CLK;
-	conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-	conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-	conf.master.clk_speed = 400000;
-	ESP_ERROR_CHECK(i2c_param_config(I2C_NUM_0, &conf));
-	ESP_ERROR_CHECK(i2c_driver_install(I2C_NUM_0, I2C_MODE_MASTER, 0, 0, 0));
-}
 
 void start(void)
 {
 	xTaskCreate(update_display, "update_display", 4096, NULL, 2, NULL);
 
-	init_i2c();
-	inertialNavi.initialize();
+	i2c.initialize(PIN_I2C_SDA, PIN_I2C_SCL, 400000);
+	inertialNavi.initialize(&i2c);
 
 	xTaskCreate(vTaskDroneInertialNavi, "InertialNavi", 2048, (void *) &inertialNavi, 2, NULL);
 
-	BMP280 bmp = BMP280();
-	if(bmp.testConnection()) {
-		ESP_LOGI("BMP", "BMP connection successful");
-	} else {
-		ESP_LOGI("BMP", "BMP cannot connect");
-	}
-	bmp.initialize();
+	bmp.initialize(&i2c, 0x77);
+	
+	bmp.configuration.osTemperature = BMP280_OS_16X;
+	bmp.configuration.osPressure = BMP280_OS_16X;
+	bmp.configuration.outputDataRata = BMP280_ODR_0_5_MS;
+	bmp.configuration.filter = BMP280_FILTER_COEFF_16;
+	bmp.powerMode = BMP280_NORMAL_MODE;
+	bmp.writeConfiguration();
 
-	xTaskCreate(update_bmp, "BMP", 2048, NULL, 2, NULL);
-
+	xTaskCreate(update_bmp, "update_bmp", 2048, NULL, 2, NULL);
 }
 
 extern "C" void app_main(void)

@@ -136,6 +136,13 @@ CONFIG_Z_ACCEL_OFFSET=0
 # end of Drone Inertial Navigation
 
 #
+# I2Cdev library
+#
+CONFIG_I2C_BUS_ACCESS_TIMEOUT=100
+CONFIG_I2C_BUS_DEFAULT_READ_TIMEOUT=1000
+# end of I2Cdev library
+
+#
 # Compiler options
 #
 CONFIG_COMPILER_OPTIMIZATION_DEFAULT=y

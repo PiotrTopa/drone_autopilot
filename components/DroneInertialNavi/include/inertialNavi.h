@@ -1,5 +1,5 @@
 #include "MPU6050.h"
-//#include "MPU6050_6Axis_MotionApps20.h"
+#include "I2Cdev.h"
 
 #define DMP_REFRESH_PERIOD_MS 100
 
@@ -25,10 +25,11 @@ public:
     RotationVectorFloat rotation;
 
     InertialNavi();
-    void initialize();
+    void initialize(I2Cdev* i2cBusInterface);
     void update();
 
 private:
+    I2Cdev* i2cBus;
     MPU6050 mpu;
     uint16_t packetSize = 42; // expected DMP packet size (default is 42 bytes)
     uint16_t fifoCount;       // count of all bytes currently in FIFO

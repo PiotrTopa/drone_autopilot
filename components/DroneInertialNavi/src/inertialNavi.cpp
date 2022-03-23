@@ -13,17 +13,22 @@ static const char *TAG = "InertialNavi";
  */
 InertialNavi::InertialNavi()
 {
+
 }
 
 /**
  * Initializes MPU6050
  */
-void InertialNavi::initialize()
+void InertialNavi::initialize(I2Cdev* i2cBusInterface)
 {
+    i2cBus = i2cBusInterface;
+
     ESP_LOGI(TAG, "Initialization");
+    mpu.initialize(i2cBus, MPU6050_DEFAULT_ADDRESS);
+
     uint8_t devId = mpu.getDeviceID();
     ESP_LOGI(TAG, "DevID: %x", devId);
-    mpu.initialize();
+
     mpu.CalibrateGyro();
     mpu.CalibrateAccel();
     mpu.dmpInitialize();
