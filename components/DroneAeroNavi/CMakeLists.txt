@@ -1,7 +1,7 @@
-set(COMPONENT_SRCS "src/inertialNavi.cpp")
+set(COMPONENT_SRCS "src/AeroNav.cpp")
 set(COMPONENT_ADD_INCLUDEDIRS "include")
 set(COMPONENT_REQUIRES
-    MPU6050
+    BMP280
     I2Cdev
 )
 

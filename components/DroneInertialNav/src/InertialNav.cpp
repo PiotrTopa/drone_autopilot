@@ -2,16 +2,16 @@
 #include <sys/time.h>
 #include "esp_log.h"
 
-#include "inertialNavi.h"
+#include "InertialNav.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 
 
-static const char *TAG = "InertialNavi";
+static const char *TAG = "InertialNav";
 
 /**
  * Default contructor.
  */
-InertialNavi::InertialNavi()
+InertialNav::InertialNav()
 {
 
 }
@@ -19,7 +19,7 @@ InertialNavi::InertialNavi()
 /**
  * Initializes MPU6050
  */
-void InertialNavi::initialize(I2Cdev* i2cBusInterface)
+void InertialNav::initialize(I2Cdev* i2cBusInterface)
 {
     i2cBus = i2cBusInterface;
 
@@ -41,7 +41,7 @@ void InertialNavi::initialize(I2Cdev* i2cBusInterface)
     ESP_LOGI(TAG, "Initialization completed");
 }
 
-void InertialNavi::updateRotation()
+void InertialNav::updateRotation()
 {
     float ypr[3];
     mpu.dmpGetYawPitchRoll(ypr, &quaternion, &gravity);
@@ -50,7 +50,7 @@ void InertialNavi::updateRotation()
     rotation.roll = ypr[2];
 }
 
-void InertialNavi::updateIfrVelocityPosition()
+void InertialNav::updateIfrVelocityPosition()
 {
     struct timeval tv_now;
     gettimeofday(&tv_now, NULL);
@@ -74,7 +74,7 @@ void InertialNavi::updateIfrVelocityPosition()
  * Reads FIFO data and updates local variables to let them be used
  * by other components.
  */
-void InertialNavi::update()
+void InertialNav::update()
 {
     mpuIntStatus = mpu.getIntStatus();
     // get current FIFO count
@@ -122,9 +122,9 @@ void InertialNavi::update()
     vTaskDelay(DMP_REFRESH_PERIOD_MS / portTICK_PERIOD_MS);
 }
 
-extern "C" void vTaskDroneInertialNavi(void *pvParameters)
+extern "C" void vTaskDroneInertialNav(void *pvParameters)
 {
-    InertialNavi *navi = (InertialNavi *)pvParameters;
+    InertialNav *navi = (InertialNav *)pvParameters;
     while (true)
     {
         navi->update();

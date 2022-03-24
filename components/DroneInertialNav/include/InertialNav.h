@@ -14,7 +14,7 @@ public:
     RotationVectorFloat(float yaw, float pitch, float roll);
 };
 
-class InertialNavi
+class InertialNav
 {
 public:
     Quaternion quaternion; // [w, x, y, z]         quaternion container
@@ -24,7 +24,7 @@ public:
     VectorFloat ifrPosition;
     RotationVectorFloat rotation;
 
-    InertialNavi();
+    InertialNav();
     void initialize(I2Cdev* i2cBusInterface);
     void update();
 
@@ -39,5 +39,5 @@ private:
     void updateIfrVelocityPosition();
 };
 
-extern "C" void vTaskDroneInertialNavi(void* pvParameters);
+extern "C" void vTaskDroneInertialNav(void* pvParameters);
 
