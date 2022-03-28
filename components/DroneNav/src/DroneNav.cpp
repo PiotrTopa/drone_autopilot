@@ -19,19 +19,20 @@ void DroneNav::initialize(AeroNav *aeroNavModule, InertialNav *inertialNavModule
     aeroNav = aeroNavModule;
     inertialNav = inertialNavModule;
     kX.clear();
-    kX(0, 0) = 100.0;
-    kP(0, 0) = 1.75543e-05;
-    kP(0, 1) = 3.94284e-06;
-    kP(0, 2) = 8.78154e-07;
-    kP(1, 0) = 3.94285e-06;
-    kP(1, 1) = 8.8313e-07;
-    kP(1, 2) = 1.97241e-07;
-    kP(2, 0) = 8.78154e-07;
-    kP(2, 1) = 1.97241e-07;
-    kP(2, 2) = 4.39296e-08;
+    kX(0, 0) = 200.0;
+
+    kP(0, 0) = 0.0218685;
+    kP(0, 1) = 0.00620678;
+    kP(0, 2) = 0.00173698;
+    kP(1, 0) = 0.00620679;
+    kP(1, 1) = 0.00176162;
+    kP(1, 2) = 0.000492993;
+    kP(2, 0) = 0.00173698;
+    kP(2, 1) = 0.000492993;
+    kP(2, 2) = 0.000137965;
     
-    kV(0, 0) = 0.02;
-    kV(1, 0) = 0.001;
+    kV(0, 0) = 0.63;
+    kV(1, 0) = 0.05;
 
     kR = kV * kV.t();
 
@@ -44,7 +45,7 @@ void DroneNav::initialize(AeroNav *aeroNavModule, InertialNav *inertialNavModule
 
     kQn.clear();
     kQn(2, 2) = 0.1;
-    kQn(3, 3) = 0.01;
+    kQn(3, 3) = 0.1;
 }
 
 void DroneNav::update()
@@ -98,13 +99,16 @@ void DroneNav::update()
     // update uncertainty estimate
     kP = (kI - kK * kH)*kP*(kI - kK * kH).t() + (kK * kR * kK.t());
 
-    std::cout << "X:" << std::endl
-              << kX << std::endl;
-    std::cout << "z:" << std::endl
-              << kZ << std::endl;
+    // std::cout << "X:" << std::endl
+    //           << kX << std::endl;
+    // std::cout << "z:" << std::endl
+    //           << kZ << std::endl;
+    // std::cout << "P:" << std::endl
+    //           << kP << std::endl;
+    //printf("ifrRawAcceleration: %df %df %df\n", inertialNav->localRawAcceleration.x, inertialNav->localRawAcceleration.y, inertialNav->localRawAcceleration.z);
+    //printf("ifrRawAcceleration: %df %df %df\n", inertialNav->localRawAcceleration.x, inertialNav->localRawAcceleration.y, inertialNav->localRawAcceleration.z);
 
-    printf("ifrRawAcceleration: %df %df %df\n", inertialNav->localRawAcceleration.x, inertialNav->localRawAcceleration.y, inertialNav->localRawAcceleration.z);
-    
+    printf("%f %f %f ## %f %f\n", kX(0, 0), kX(1, 0), kX(2, 0), kZ(0, 0), kZ(0, 1));    
 }
 
 extern "C" void vTaskDroneNav(void *pvParameters)

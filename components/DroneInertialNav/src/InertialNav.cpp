@@ -34,8 +34,14 @@ void InertialNav::initialize(I2Cdev *i2cBusInterface)
     // mpu.setXGyroOffset(CONFIG_X_GYRO_OFFSET);
     // mpu.setYGyroOffset(CONFIG_Y_GYRO_OFFSET);
     // mpu.setZGyroOffset(CONFIG_Z_GYRO_OFFSET);
+    
+    //INIT -2252 0 1696
+    mpu.setXAccelOffset(-2284);
+    mpu.setYAccelOffset(0);
     mpu.setZAccelOffset(1520);
+
     mpu.setDMPEnabled(true);
+
     ESP_LOGI(TAG, "Initialization completed");
 }
 
