@@ -6,3 +6,4 @@
 components/I2Cdev
 components/MPU6050
 components/BMP280
+components/esp-dsp

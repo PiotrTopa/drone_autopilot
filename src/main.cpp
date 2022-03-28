@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <iostream>
 #include <driver/i2c.h>
 #include <math.h>
 #include "freertos/FreeRTOS.h"
@@ -10,16 +11,20 @@
 #include "esp_system.h"
 #include "esp_vfs.h"
 #include "esp_spiffs.h"
+#include "esp_dsp.h"
 
-#include "inertialNavi.h"
-#include "BMP280.h"
 #include "I2Cdev.h"
+#include "InertialNav.h"
+#include "AeroNav.h"
+#include "DroneNav.h"
 
 extern "C"
 {
 #include "st7789.h"
 #include "fontx.h"
 }
+
+#define EIGEN_MPL2_ONLY
 
 #define PIN_I2C_SDA GPIO_NUM_32
 #define PIN_I2C_SCL GPIO_NUM_33
@@ -36,10 +41,11 @@ extern "C"
 #define CONFIG_BL_GPIO 4
 
 I2Cdev i2c = I2Cdev(I2C_NUM_0);
-BMP280 bmp;
-InertialNavi inertialNavi = InertialNavi();
+InertialNav inertialNav = InertialNav();
+AeroNav aeroNav = AeroNav();
+DroneNav droneNav = DroneNav();
+
 double pressure, altitude, temperature;
-double seaLevelPressure = 103400.0;
 
 static const char *TAG = "ST7789";
 
@@ -60,44 +66,44 @@ void HorizontalTest(TFT_t *dev, FontxFile *fx, int width, int height)
 	color = WHITE;
 	sprintf((char *)ascii, "Acc");
 	lcdDrawString(dev, fx, 0, fontHeight * 1 - 1, ascii, color);
-	sprintf((char *)ascii, "X:%3.2f", inertialNavi.ifrAcceleration.x);
+	sprintf((char *)ascii, "X:%3.2f", inertialNav.ifrAcceleration.x);
 	lcdDrawString(dev, fx, 0, fontHeight * 2 - 1, ascii, color);
-	sprintf((char *)ascii, "Y:%3.2f", inertialNavi.ifrAcceleration.y);
+	sprintf((char *)ascii, "Y:%3.2f", inertialNav.ifrAcceleration.y);
 	lcdDrawString(dev, fx, 0, fontHeight * 3 - 1, ascii, color);
-	sprintf((char *)ascii, "Z:%3.2f", inertialNavi.ifrAcceleration.z);
+	sprintf((char *)ascii, "Z:%3.2f", inertialNav.ifrAcceleration.z);
 	lcdDrawString(dev, fx, 0, fontHeight * 4 - 1, ascii, color);
 
 	color = YELLOW;
 	sprintf((char *)ascii, "Rot");
 	lcdDrawString(dev, fx, 60, fontHeight * 1 - 1, ascii, color);
-	sprintf((char *)ascii, "Y:%3.2f", inertialNavi.rotation.yaw * 180/M_PI);
+	sprintf((char *)ascii, "Y:%3.2f", inertialNav.rotation.yaw * 180 / M_PI);
 	lcdDrawString(dev, fx, 60, fontHeight * 2 - 1, ascii, color);
-	sprintf((char *)ascii, "P:%3.2f", inertialNavi.rotation.pitch * 180/M_PI);
+	sprintf((char *)ascii, "P:%3.2f", inertialNav.rotation.pitch * 180 / M_PI);
 	lcdDrawString(dev, fx, 60, fontHeight * 3 - 1, ascii, color);
-	sprintf((char *)ascii, "R:%3.2f", inertialNavi.rotation.roll * 180/M_PI);
+	sprintf((char *)ascii, "R:%3.2f", inertialNav.rotation.roll * 180 / M_PI);
 	lcdDrawString(dev, fx, 60, fontHeight * 4 - 1, ascii, color);
 
-/**
-	color = RED;
-	sprintf((char *)ascii, "Velocity");
-	lcdDrawString(dev, fx, 0, fontHeight * 6 - 1, ascii, color);
-	sprintf((char *)ascii, "X: %3.2f", inertialNavi.ifrVelocity.x);
-	lcdDrawString(dev, fx, 0, fontHeight * 7 - 1, ascii, color);
-	sprintf((char *)ascii, "Y: %3.2f", inertialNavi.ifrVelocity.y);
-	lcdDrawString(dev, fx, 0, fontHeight * 8 - 1, ascii, color);
-	sprintf((char *)ascii, "Z: %3.2f", inertialNavi.ifrVelocity.z);
-	lcdDrawString(dev, fx, 0, fontHeight * 9 - 1, ascii, color);
+	/**
+		color = RED;
+		sprintf((char *)ascii, "Velocity");
+		lcdDrawString(dev, fx, 0, fontHeight * 6 - 1, ascii, color);
+		sprintf((char *)ascii, "X: %3.2f", inertialNav.ifrVelocity.x);
+		lcdDrawString(dev, fx, 0, fontHeight * 7 - 1, ascii, color);
+		sprintf((char *)ascii, "Y: %3.2f", inertialNav.ifrVelocity.y);
+		lcdDrawString(dev, fx, 0, fontHeight * 8 - 1, ascii, color);
+		sprintf((char *)ascii, "Z: %3.2f", inertialNav.ifrVelocity.z);
+		lcdDrawString(dev, fx, 0, fontHeight * 9 - 1, ascii, color);
 
-	color = GREEN;
-	sprintf((char *)ascii, "Position");
-	lcdDrawString(dev, fx, 0, fontHeight * 11 - 1, ascii, color);
-	sprintf((char *)ascii, "X: %3.1f", inertialNavi.ifrPosition.x);
-	lcdDrawString(dev, fx, 0, fontHeight * 12 - 1, ascii, color);
-	sprintf((char *)ascii, "Y: %3.1f", inertialNavi.ifrPosition.y);
-	lcdDrawString(dev, fx, 0, fontHeight * 13 - 1, ascii, color);
-	sprintf((char *)ascii, "Z: %3.1f", inertialNavi.ifrPosition.z);
-	lcdDrawString(dev, fx, 0, fontHeight * 14 - 1, ascii, color);
-**/
+		color = GREEN;
+		sprintf((char *)ascii, "Position");
+		lcdDrawString(dev, fx, 0, fontHeight * 11 - 1, ascii, color);
+		sprintf((char *)ascii, "X: %3.1f", inertialNav.ifrPosition.x);
+		lcdDrawString(dev, fx, 0, fontHeight * 12 - 1, ascii, color);
+		sprintf((char *)ascii, "Y: %3.1f", inertialNav.ifrPosition.y);
+		lcdDrawString(dev, fx, 0, fontHeight * 13 - 1, ascii, color);
+		sprintf((char *)ascii, "Z: %3.1f", inertialNav.ifrPosition.z);
+		lcdDrawString(dev, fx, 0, fontHeight * 14 - 1, ascii, color);
+	**/
 
 	color = GREEN;
 	sprintf((char *)ascii, "Aero");
@@ -166,38 +172,20 @@ extern "C" void update_display(void *pvParameters)
 	}
 }
 
-extern "C" void update_bmp(void *pvParameters) {
-	while (true)
-	{
-		bmp.readRawData();
-		temperature = bmp.getTemperatureDouble();
-		pressure = bmp.getPressureDouble();
-		altitude = 44330 * (1.0 - pow(pressure / seaLevelPressure, 0.1903));
-		printf("READING %3.2f %3.2f %3.2f\n", temperature, pressure, altitude);
-		vTaskDelay(250/ portTICK_PERIOD_MS);
-	}
-}
-
-
 void start(void)
 {
 	xTaskCreate(update_display, "update_display", 4096, NULL, 2, NULL);
 
 	i2c.initialize(PIN_I2C_SDA, PIN_I2C_SCL, 400000);
-	inertialNavi.initialize(&i2c);
 
-	xTaskCreate(vTaskDroneInertialNavi, "InertialNavi", 2048, (void *) &inertialNavi, 2, NULL);
+	inertialNav.initialize(&i2c);
+	xTaskCreate(vTaskDroneInertialNav, "InertialNav", 2048, (void *)&inertialNav, 2, NULL);
 
-	bmp.initialize(&i2c, 0x77);
-	
-	bmp.configuration.osTemperature = BMP280_OS_16X;
-	bmp.configuration.osPressure = BMP280_OS_16X;
-	bmp.configuration.outputDataRata = BMP280_ODR_0_5_MS;
-	bmp.configuration.filter = BMP280_FILTER_COEFF_16;
-	bmp.powerMode = BMP280_NORMAL_MODE;
-	bmp.writeConfiguration();
+	aeroNav.initialize(&i2c);
+	xTaskCreate(vTaskDroneAeroNav, "AeroNav", 2048, (void *)&aeroNav, 2, NULL);
 
-	xTaskCreate(update_bmp, "update_bmp", 2048, NULL, 2, NULL);
+	droneNav.initialize(&aeroNav, &inertialNav);
+	xTaskCreate(vTaskDroneNav, "DroneNav", 2 * 4096, (void *)&droneNav, 2, NULL);
 }
 
 extern "C" void app_main(void)

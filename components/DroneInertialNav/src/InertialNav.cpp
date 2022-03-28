@@ -5,7 +5,6 @@
 #include "InertialNav.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 
-
 static const char *TAG = "InertialNav";
 
 /**
@@ -13,13 +12,12 @@ static const char *TAG = "InertialNav";
  */
 InertialNav::InertialNav()
 {
-
 }
 
 /**
  * Initializes MPU6050
  */
-void InertialNav::initialize(I2Cdev* i2cBusInterface)
+void InertialNav::initialize(I2Cdev *i2cBusInterface)
 {
     i2cBus = i2cBusInterface;
 
@@ -33,10 +31,10 @@ void InertialNav::initialize(I2Cdev* i2cBusInterface)
     mpu.CalibrateAccel();
     mpu.dmpInitialize();
 
-    //mpu.setXGyroOffset(CONFIG_X_GYRO_OFFSET);
-    //mpu.setYGyroOffset(CONFIG_Y_GYRO_OFFSET);
-    //mpu.setZGyroOffset(CONFIG_Z_GYRO_OFFSET);
-    //mpu.setZAccelOffset(CONFIG_Z_ACCEL_OFFSET);
+    // mpu.setXGyroOffset(CONFIG_X_GYRO_OFFSET);
+    // mpu.setYGyroOffset(CONFIG_Y_GYRO_OFFSET);
+    // mpu.setZGyroOffset(CONFIG_Z_GYRO_OFFSET);
+    mpu.setZAccelOffset(1520);
     mpu.setDMPEnabled(true);
     ESP_LOGI(TAG, "Initialization completed");
 }
@@ -60,7 +58,7 @@ void InertialNav::updateIfrVelocityPosition()
         ifrPosition = VectorFloat();
     }
 
-    float delta = (float) DMP_REFRESH_PERIOD_MS / 1000.;
+    float delta = (float)DMP_REFRESH_PERIOD_MS / 1000.;
     ifrVelocity.x += delta * (float)ifrAcceleration.x;
     ifrVelocity.y += delta * (float)ifrAcceleration.y;
     ifrVelocity.z += delta * (float)ifrAcceleration.z;
@@ -100,8 +98,7 @@ void InertialNav::update()
         mpu.dmpGetQuaternion(&quaternion, fifoBuffer);
         mpu.dmpGetGravity(&gravity, &quaternion);
 
-        // read acceleration, compute to m/s
-        VectorInt16 localRawAcceleration, linearRawAcceleration, ifrRawAcceleration;
+        // read acceleration, compute to m/sifrA
         mpu.dmpGetAccel(&localRawAcceleration, fifoBuffer);
         mpu.dmpGetLinearAccel(&linearRawAcceleration, &localRawAcceleration, &gravity);
         mpu.dmpGetLinearAccelInWorld(&ifrRawAcceleration, &linearRawAcceleration, &quaternion);
@@ -109,17 +106,19 @@ void InertialNav::update()
         ifrAcceleration = VectorFloat(
             (float)ifrRawAcceleration.x / 835.f,
             (float)ifrRawAcceleration.y / 835.f,
-            (float)ifrRawAcceleration.z / 835.f
-        );
+            (float)ifrRawAcceleration.z / 835.f);
 
         updateRotation();
         updateIfrVelocityPosition();
     }
+}
 
-    // Best result is to match with DMP refresh rate
-    //  Its last value in components/MPU6050/MPU6050_6Axis_MotionApps20.h file line 310
-    //  Now its 0x13, which means DMP is refreshed with 10Hz rate
-    vTaskDelay(DMP_REFRESH_PERIOD_MS / portTICK_PERIOD_MS);
+/**
+ * Return current sensor data for IFR Acceleration
+ */
+VectorFloat *InertialNav::getIfrAcceleration()
+{
+    return &ifrAcceleration;
 }
 
 extern "C" void vTaskDroneInertialNav(void *pvParameters)
@@ -128,6 +127,7 @@ extern "C" void vTaskDroneInertialNav(void *pvParameters)
     while (true)
     {
         navi->update();
+        vTaskDelay(DMP_REFRESH_PERIOD_MS / portTICK_PERIOD_MS);
     }
     vTaskDelete(NULL);
 }

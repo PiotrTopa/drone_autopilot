@@ -1,3 +1,6 @@
+#ifndef DRONE_INERTIAL_NAV_H_
+#define DRONE_INERTIAL_NAV_H_
+
 #include "MPU6050.h"
 #include "I2Cdev.h"
 
@@ -22,14 +25,16 @@ public:
     VectorFloat ifrAcceleration;
     VectorFloat ifrVelocity;
     VectorFloat ifrPosition;
+    VectorInt16 localRawAcceleration, linearRawAcceleration, ifrRawAcceleration;
     RotationVectorFloat rotation;
+    VectorFloat *getIfrAcceleration();
 
     InertialNav();
-    void initialize(I2Cdev* i2cBusInterface);
+    void initialize(I2Cdev *i2cBusInterface);
     void update();
 
 private:
-    I2Cdev* i2cBus;
+    I2Cdev *i2cBus;
     MPU6050 mpu;
     uint16_t packetSize = 42; // expected DMP packet size (default is 42 bytes)
     uint16_t fifoCount;       // count of all bytes currently in FIFO
@@ -39,5 +44,6 @@ private:
     void updateIfrVelocityPosition();
 };
 
-extern "C" void vTaskDroneInertialNav(void* pvParameters);
+extern "C" void vTaskDroneInertialNav(void *pvParameters);
 
+#endif
