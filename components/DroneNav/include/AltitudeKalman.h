@@ -8,8 +8,12 @@ public:
     void initialize(AeroNav *aeroNavModule, InertialNav *inertialNavModule);
     
 private:
-    void AltitudeKalman::updateLastMeasurementTime();
-    
+    void updateLastMeasurementTime();
+    int32_t getTimeDelta();
+    dspm::Mat getF(int32_t timeDelta);
+    void update(dspm::Mat z);
+
+
     AeroNav *aeroNav;
     InertialNav *inertialNav;
     struct timeval lastMeasurementTime;
@@ -20,6 +24,7 @@ private:
     dspm::Mat H = dspm::Mat(2, 3); // observation matrix H
     dspm::Mat Ht = dspm::Mat(3, 2); // observation matrix transposed H
     dspm::Mat R = dspm::Mat(2, 2); // observation matrix H
+    dspm::Mat I = dspm::Mat::eye(3);
 }
 
 #endif

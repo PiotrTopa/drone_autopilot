@@ -50,6 +50,9 @@ int32_t AltitudeKalman::getTimeDelta() {
     return (int32_t)(nowTime.tv_sec - lastMeasurementTime.tv_sec) * 1000000L + (int32_t)(nowTime.tv_usec - lastMeasurementTime.tv_usec);
 }
 
+/**
+ * Return process model.
+ */
 dspm::Mat AltitudeKalman::getF(int32_t timeDelta) {
     double dt = (double) timeDelta / 1000000.0;
     dspm::Mat F(3, 3);
@@ -70,4 +73,28 @@ dspm::Mat AltitudeKalman::getF(int32_t timeDelta) {
  */ 
 void AltitudeKalman::getState() {
     int32_t timeDelta = getTimeDelta();
+    return getF(timeDelta) * X;
+}
+
+/**
+ * Update measurement
+ */
+void AltitudeKalman::update(dspm::Mat z) {
+    // calculate process uncertainty
+    dspm::Mat Q = F * Qn * F.t();
+
+    // calculate state extrapolation
+    X = F * X;
+
+    // calculate covariance extrapolation
+    P = F * P * F.t() + Q;
+
+    // compute Kalman gain
+    dspm::Mat K = P * Ht * (H * P * Ht + R).inverse();
+
+    // update state estimate
+    X = X + K * (z - H * X);
+
+    // update uncertainty estimate
+    P = (I - K * H) * P * (I - K * H).t() + (K * R * K.t());
 }
