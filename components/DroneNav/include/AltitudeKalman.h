@@ -1,17 +1,21 @@
 #ifndef DRONE_NAV_ALTITUDE_KALMAN_H_
 #define DRONE_NAV_ALTITUDE_KALMAN_H_
 
+#include "esp_dsp.h"
+
 class AltitudeKalman
 {
 public:
     AltitudeKalman();
-    void initialize(AeroNav *aeroNavModule, InertialNav *inertialNavModule);
+    void initialize();
+    dspm::Mat getExtrapolatedState();
+    void updateMeasurement(dspm::Mat z);
+    void setInitialState(dspm::Mat y);
     
 private:
     void updateLastMeasurementTime();
     int32_t getTimeDelta();
     dspm::Mat getF(int32_t timeDelta);
-    void update(dspm::Mat z);
 
 
     AeroNav *aeroNav;
@@ -25,6 +29,6 @@ private:
     dspm::Mat Ht = dspm::Mat(3, 2); // observation matrix transposed H
     dspm::Mat R = dspm::Mat(2, 2); // observation matrix H
     dspm::Mat I = dspm::Mat::eye(3);
-}
+};
 
 #endif

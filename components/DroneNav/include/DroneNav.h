@@ -3,6 +3,7 @@
 
 #include "AeroNav.h"
 #include "InertialNav.h"
+#include "AltitudeKalman.h"
 #include "esp_dsp.h"
 
 class DroneNav

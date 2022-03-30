@@ -1,11 +1,10 @@
 #include "AltitudeKalman.h"
 
-void AltitudeKalman::setInitialState(float altitude)
+void AltitudeKalman::setInitialState(dspm::Mat initialX)
 {
     // Set the initial state
-    X.clear();
-    X(0, 0) = altitude;
-
+    X = initialX;
+    
     // Set initial uncertainty
     // this also keeps the state, and those values has impact on the time
     // required to stabilize the filter
@@ -71,7 +70,7 @@ dspm::Mat AltitudeKalman::getF(int32_t timeDelta) {
 /** 
  * Return current extrapolated state
  */ 
-void AltitudeKalman::getState() {
+dspm::Mat AltitudeKalman::getExtrapolatedState() {
     int32_t timeDelta = getTimeDelta();
     return getF(timeDelta) * X;
 }
@@ -79,7 +78,7 @@ void AltitudeKalman::getState() {
 /**
  * Update measurement
  */
-void AltitudeKalman::update(dspm::Mat z) {
+void AltitudeKalman::updateMeasurement(dspm::Mat z) {
     // calculate process uncertainty
     dspm::Mat Q = F * Qn * F.t();
 
