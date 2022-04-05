@@ -3,6 +3,7 @@
 #include "esp_log.h"
 
 #include "DroneNav.h"
+#include "AltitudeKalman.h"
 
 static const char *TAG = "DroneNav";
 double seaLevelPressure = 100800.0;
@@ -14,7 +15,7 @@ DroneNav::DroneNav()
 {
 }
 
-void DroneNav::initialize(AeroNav *aeroNavModule, InertialNav *inertialNavModule)
+void DroneNav::initialize(AeroNav aeroNavModule*, InertialNav *inertialNavModule)
 {
     aeroNav = aeroNavModule;
     inertialNav = inertialNavModule;

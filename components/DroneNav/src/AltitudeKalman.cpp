@@ -1,13 +1,10 @@
 #include "AltitudeKalman.h"
 
-void AltitudeKalman::setInitialState(dspm::Mat initialX)
-{
-    // Set the initial state
-    X = initialX;
-    
+AltitudeKalman::AltitudeKalman() {
     // Set initial uncertainty
     // this also keeps the state, and those values has impact on the time
     // required to stabilize the filter
+    P = dspm::Mat(3, 3); 
     P(0, 0) = 0.0218685;
     P(0, 1) = 0.00620678;
     P(0, 2) = 0.00173698;
@@ -19,6 +16,7 @@ void AltitudeKalman::setInitialState(dspm::Mat initialX)
     P(2, 2) = 0.000137965;
 
     // Set measurement matrix
+    H = dspm::Mat(2, 3);
     H(0, 0) = 1;
     H(0, 1) = 0;
     H(0, 2) = 0;
@@ -34,19 +32,10 @@ void AltitudeKalman::setInitialState(dspm::Mat initialX)
     R = V * V.t();
 
     // Set process noise
+    Qn = dspm::Mat(3, 3);
     Qn.clear();
     Qn(2, 2) = 0.1;
     Qn(3, 3) = 0.1;
-}
-
-void AltitudeKalman::updateLastMeasurementTime() {
-    gettimeofday(&lastMeasurementTime, NULL);
-}
-
-int32_t AltitudeKalman::getTimeDelta() {
-    struct timeval nowTime;
-    gettimeofday(&nowTime, NULL);
-    return (int32_t)(nowTime.tv_sec - lastMeasurementTime.tv_sec) * 1000000L + (int32_t)(nowTime.tv_usec - lastMeasurementTime.tv_usec);
 }
 
 /**
@@ -65,35 +54,4 @@ dspm::Mat AltitudeKalman::getF(int32_t timeDelta) {
     F(2, 1) = 0;
     F(2, 2) = 1;
     return F;
-}
-
-/** 
- * Return current extrapolated state
- */ 
-dspm::Mat AltitudeKalman::getExtrapolatedState() {
-    int32_t timeDelta = getTimeDelta();
-    return getF(timeDelta) * X;
-}
-
-/**
- * Update measurement
- */
-void AltitudeKalman::updateMeasurement(dspm::Mat z) {
-    // calculate process uncertainty
-    dspm::Mat Q = F * Qn * F.t();
-
-    // calculate state extrapolation
-    X = F * X;
-
-    // calculate covariance extrapolation
-    P = F * P * F.t() + Q;
-
-    // compute Kalman gain
-    dspm::Mat K = P * Ht * (H * P * Ht + R).inverse();
-
-    // update state estimate
-    X = X + K * (z - H * X);
-
-    // update uncertainty estimate
-    P = (I - K * H) * P * (I - K * H).t() + (K * R * K.t());
 }
