@@ -15,7 +15,7 @@ public:
 protected:
     void updateLastMeasurementTime();
     int32_t getTimeDelta();
-    dspm::Mat getF(int32_t timeDelta);
+    virtual dspm::Mat getF(int32_t timeDelta);
     struct timeval lastMeasurementTime;
 
     dspm::Mat X;

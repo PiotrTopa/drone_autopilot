@@ -4,10 +4,12 @@
 
 #include "esp_dsp.h"
 
-class AltitudeKalman : KalmanFilter
+class AltitudeKalman : public KalmanFilter
 {
 public:
     AltitudeKalman();
+protected:
+    dspm::Mat getF(int32_t timeDelta);
 };
 
 #endif
