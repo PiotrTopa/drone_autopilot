@@ -5,7 +5,7 @@
 #include "DroneNav.h"
 #include "AltitudeKalman.h"
 
-static const char *TAG = "DroneNav";
+//static const char *TAG = "DroneNav";
 double seaLevelPressure = 100800.0;
 
 /**
@@ -29,11 +29,11 @@ void DroneNav::update()
 {
     // measurmnet vector
     AeroNavRawData *barometricDataStatic = aeroNav->getRawDataStatic();
-    AeroNavRawData *barometricDataDynamic = aeroNav->getRawDataDynamic();
+    //AeroNavRawData *barometricDataDynamic = aeroNav->getRawDataDynamic();
     VectorFloat *ifrAcceleration  = inertialNav->getIfrAcceleration();
 
     dspm::Mat Z = dspm::Mat(2, 1);
-    Z(0, 0) = 44330 * (1.0 - pow(barometricData->pressure / seaLevelPressure, 0.1903));
+    Z(0, 0) = 44330 * (1.0 - pow(barometricDataStatic->pressure / seaLevelPressure, 0.1903));
     Z(1, 0) = ifrAcceleration->z;
     altitudeKalman.updateMeasurement(Z);
 
