@@ -25,6 +25,18 @@ void DroneNav::initialize(AeroNav *aeroNavModule, InertialNav *inertialNavModule
     altitudeKalman.setInitialState(z);
 }
 
+double DroneNav::getAltitude() {
+    return altitude;
+}
+
+double DroneNav::getVerticalSpeed() {
+    return verticalSpeed;
+}
+
+double DroneNav::getAirSpeed() {
+    return airSpeed;
+}
+
 void DroneNav::update()
 {
     // measurmnet vector
@@ -37,11 +49,14 @@ void DroneNav::update()
     Z(1, 0) = ifrAcceleration->z;
     altitudeKalman.updateMeasurement(Z);
 
-    dspm::Mat X = altitudeKalman.getExtrapolatedState();
+    dspm::Mat X = altitudeKalman.getState();
+    altitude = X(0, 0);
+    verticalSpeed = X(1, 0);
+    
     // std::cout << "P:" << std::endl
     //           << kP << std::endl;
 
-    printf("%f %f %f ## %f %f\n", X(0, 0), X(1, 0), X(2, 0), Z(0, 0), Z(0, 1));
+    printf("%f %f\n", altitude, verticalSpeed);
 }
 
 extern "C" void vTaskDroneNav(void *pvParameters)

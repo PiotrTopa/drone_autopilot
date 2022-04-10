@@ -9,6 +9,7 @@ public:
     KalmanFilter();
     void initialize();
     dspm::Mat getExtrapolatedState();
+    dspm::Mat getState();
     void updateMeasurement(dspm::Mat z);
     void setInitialState(dspm::Mat y);
 

@@ -34,6 +34,13 @@ dspm::Mat KalmanFilter::getExtrapolatedState() {
     return getF(timeDelta) * X;
 }
 
+/** 
+ * Return last calculated state
+ */ 
+dspm::Mat KalmanFilter::getState() {
+    return X;
+}
+
 /**
  * Update measurement
  */
