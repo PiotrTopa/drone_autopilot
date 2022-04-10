@@ -28,7 +28,8 @@ void DroneNav::initialize(AeroNav *aeroNavModule, InertialNav *inertialNavModule
 void DroneNav::update()
 {
     // measurmnet vector
-    AeroNavRawData *barometricData = aeroNav->getRawDataStatic();
+    AeroNavRawData *barometricDataStatic = aeroNav->getRawDataStatic();
+    AeroNavRawData *barometricDataDynamic = aeroNav->getRawDataDynamic();
     VectorFloat *ifrAcceleration  = inertialNav->getIfrAcceleration();
 
     dspm::Mat Z = dspm::Mat(2, 1);

@@ -17,14 +17,14 @@ public:
     AeroNav();
     void initialize(I2Cdev *i2cBusInterface);
     void update();
-    AeroNavRawData *getRawDataPitot();
+    AeroNavRawData *getRawDataDynamic();
     AeroNavRawData *getRawDataStatic();
 
 private:
     I2Cdev *i2cBus;
-    BMP280 bmpPitot;
+    BMP280 bmpDynamic;
     BMP280 bmpStatic;
-    AeroNavRawData rawDataPitot;
+    AeroNavRawData rawDataDynamic;
     AeroNavRawData rawDataStatic;
 };
 

@@ -23,14 +23,14 @@ void AeroNav::initialize(I2Cdev *i2cBusInterface)
 
     ESP_LOGI(TAG, "Initialization");
 
-    // configure sensor in pitot tube
-    bmpPitot.initialize(i2cBus, BMP280_I2C_ADDR_PRIM);
-    bmpPitot.configuration.osTemperature = BMP280_OS_16X;
-    bmpPitot.configuration.osPressure = BMP280_OS_16X;
-    bmpPitot.configuration.outputDataRata = BMP280_ODR_0_5_MS;
-    bmpPitot.configuration.filter = BMP280_FILTER_COEFF_16;
-    bmpPitot.powerMode = BMP280_NORMAL_MODE;
-    bmpPitot.writeConfiguration();
+    // configure sensor in Dynamic tube
+    bmpDynamic.initialize(i2cBus, BMP280_I2C_ADDR_PRIM);
+    bmpDynamic.configuration.osTemperature = BMP280_OS_16X;
+    bmpDynamic.configuration.osPressure = BMP280_OS_16X;
+    bmpDynamic.configuration.outputDataRata = BMP280_ODR_0_5_MS;
+    bmpDynamic.configuration.filter = BMP280_FILTER_COEFF_16;
+    bmpDynamic.powerMode = BMP280_NORMAL_MODE;
+    bmpDynamic.writeConfiguration();
 
     // configure static sensor
     bmpStatic.initialize(i2cBus, BMP280_I2C_ADDR_SEC);
@@ -49,20 +49,20 @@ void AeroNav::initialize(I2Cdev *i2cBusInterface)
  */
 void AeroNav::update()
 {
-    bmpPitot.readRawData();
+    bmpDynamic.readRawData();
     bmpStatic.readRawData();
-    rawDataPitot.temperature = bmpPitot.getTemperatureDouble();
-    rawDataPitot.pressure = bmpPitot.getPressureDouble();
+    rawDataDynamic.temperature = bmpDynamic.getTemperatureDouble();
+    rawDataDynamic.pressure = bmpDynamic.getPressureDouble();
     rawDataStatic.temperature = bmpStatic.getTemperatureDouble();
     rawDataStatic.pressure = bmpStatic.getPressureDouble();
 }
 
 /**
- * Return raw data from sensor in pitot tube
+ * Return raw data from sensor in Dynamic tube
  */
-AeroNavRawData *AeroNav::getRawDataPitot()
+AeroNavRawData *AeroNav::getRawDataDynamic()
 {
-    return &rawDataPitot;
+    return &rawDataDynamic;
 }
 
 /**
