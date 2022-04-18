@@ -9,9 +9,10 @@ public:
     KalmanFilter();
     void initialize();
     dspm::Mat getExtrapolatedState();
-    dspm::Mat getState();
+    dspm::Mat getMeasuredState();
     void updateMeasurement(dspm::Mat z);
     void setInitialState(dspm::Mat y);
+    virtual dspm::Mat getP();
 
 protected:
     void updateLastMeasurementTime();

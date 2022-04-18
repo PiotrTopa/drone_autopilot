@@ -5,15 +5,17 @@ AltitudeKalman::AltitudeKalman() {
     // this also keeps the state, and those values has impact on the time
     // required to stabilize the filter
     P = dspm::Mat(3, 3); 
-    P(0, 0) = 0.0218685;
-    P(0, 1) = 0.00620678;
-    P(0, 2) = 0.00173698;
-    P(1, 0) = 0.00620679;
-    P(1, 1) = 0.00176162;
-    P(1, 2) = 0.000492993;
-    P(2, 0) = 0.00173698;
-    P(2, 1) = 0.000492993;
-    P(2, 2) = 0.000137965;
+    P(0, 0) = 2.387716248631477e-02;
+    P(0, 1) = 6.778599228709936e-03;
+    P(0, 2) = 1.895012916065753e-03;
+    
+    P(1, 0) = 6.778594572097063e-03;
+    P(1, 1) = 1.924409065395594e-03;
+    P(1, 2) = 5.379837239161134e-04;
+    
+    P(2, 0) = 1.895012916065753e-03;
+    P(2, 1) = 5.379840731620789e-04;
+    P(2, 2) = 1.503979583503678e-04;
 
     // Set measurement matrix
     H = dspm::Mat(2, 3);
@@ -34,7 +36,7 @@ AltitudeKalman::AltitudeKalman() {
     // Set process noise
     Qn = dspm::Mat(3, 3);
     Qn.clear();
-    Qn(2, 2) = 0.1;
+    Qn(2, 2) = 0.01;
     Qn(3, 3) = 0.1;
 }
 

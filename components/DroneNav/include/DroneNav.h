@@ -6,6 +6,12 @@
 #include "AltitudeKalman.h"
 #include "esp_dsp.h"
 
+#define CONFIG_AIR_TEMPERATURE_GAIN 0.05
+#define CONFIG_AIR_SPEED_GAIN 0.10
+#define CONFIG_AIR_GAS_CONST 287.058
+
+
+
 class DroneNav
 {
 public:
@@ -23,9 +29,10 @@ private:
 
     AltitudeKalman altitudeKalman;
 
-    double altitude;
-    double verticalSpeed;
-    double airSpeed;
+    double altitude = 0;
+    double verticalSpeed = 0;
+    double airSpeed = 0.0;
+    double airTemperature = 0;
 };
 
 extern "C" void vTaskDroneNav(void *pvParameters);

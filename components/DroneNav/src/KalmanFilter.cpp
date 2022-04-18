@@ -26,6 +26,13 @@ dspm::Mat KalmanFilter::getF(int32_t timeDelta) {
     return dspm::Mat::ones(3);
 }
 
+/**
+ * Return uncertainty.
+ */
+dspm::Mat KalmanFilter::getP() {
+    return P;
+}
+
 /** 
  * Return current extrapolated state
  */ 
@@ -37,7 +44,7 @@ dspm::Mat KalmanFilter::getExtrapolatedState() {
 /** 
  * Return last calculated state
  */ 
-dspm::Mat KalmanFilter::getState() {
+dspm::Mat KalmanFilter::getMeasuredState() {
     return X;
 }
 
